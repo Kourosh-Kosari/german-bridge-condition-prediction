@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plan B — New Bridge Design Evaluation</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e5e7eb}
+header{padding:18px 22px;background:#111827;border-bottom:1px solid #263244}
+h1{margin:0;font-size:22px}
+header p{margin:6px 0 0;color:#9ca3af;font-size:12px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 390px;height:calc(100vh - 86px)}
+.mapwrap{position:relative;background:#eef2f5;overflow:hidden}
+#map{width:100%;height:100%;display:block}
+#tip{position:absolute;pointer-events:none;display:none;background:#111827;color:#fff;padding:7px 9px;border-radius:6px;font-size:11px;box-shadow:0 2px 8px #0005}
+.panel{background:#111827;border-left:1px solid #263244;padding:18px;overflow:auto}
+.section{background:#182131;border:1px solid #2b374a;border-radius:10px;padding:14px;margin-bottom:14px}
+.section h2{font-size:14px;margin:0 0 12px}
+.section p{font-size:11px;line-height:1.5;color:#9ca3af;margin:5px 0 0}
+label{display:block;font-size:11px;color:#cbd5e1;margin:10px 0 5px}
+input,select{width:100%;padding:9px 10px;border:1px solid #374151;border-radius:6px;background:#0f172a;color:#f8fafc;outline:none}
+input:focus,select:focus{border-color:#60a5fa}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:6px;padding:9px 11px;cursor:pointer;font-weight:600}
+.primary{width:100%;background:#2563eb;color:white;margin-top:12px}
+.primary:hover{background:#1d4ed8}
+.secondary{background:#e5e7eb;color:#111827}
+.secondary:hover{background:#d1d5db}
+.actions{display:flex;gap:7px;margin-top:10px}
+.actions button{flex:1}
+.status{font-size:11px;color:#9ca3af;margin-top:8px}
+.result{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px;margin-top:12px;display:none}
+.result b{font-size:12px}
+pre{white-space:pre-wrap;word-break:break-word;font-size:10px;color:#cbd5e1;margin:8px 0 0}
+.badge{display:inline-block;font-size:10px;padding:3px 6px;border-radius:10px;background:#334155;color:#cbd5e1}
+.maphelp{position:absolute;left:14px;top:14px;background:rgba(255,255,255,.95);color:#111827;padding:9px 11px;border-radius:8px;font-size:11px;box-shadow:0 2px 10px #0003}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;height:auto}
+  .mapwrap{height:58vh}
+  .panel{border-left:0;border-top:1px solid #263244}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Plan B — New Bridge Design Evaluation</h1>
+  <p>Interactive input interface for a hypothetical new bridge design. This Plan B is independent of the existing-bridge Plan A.</p>
+</header>
+
+<div class="app">
+  <div class="mapwrap">
+    <canvas id="map"></canvas>
+    <div id="tip"></div>
+    <div class="maphelp">Click the map to set latitude / longitude. Drag to move · wheel to zoom.</div>
+  </div>
+
+  <aside class="panel">
+    <div class="section">
+      <h2>1. Location</h2>
+      <div class="grid2">
+        <div>
+          <label for="latitude">Latitude</label>
+          <input id="latitude" type="number" step="0.000001" placeholder="50.737400">
+        </div>
+        <div>
+          <label for="longitude">Longitude</label>
+          <input id="longitude" type="number" step="0.000001" placeholder="7.098200">
+        </div>
+      </div>
+      <p>Coordinates can be entered manually or selected directly on the map.</p>
+    </div>
+
+    <div class="section">
+      <h2>2. Bridge Design</h2>
+      <label for="bauwerksart">Bridge type (Bauwerksart)</label>
+      <select id="bauwerksart">
+        <option value="">Select bridge type</option>
+      </select>
+
+      <label for="bauwerkstoff">Material (Bauwerkstoff)</label>
+      <select id="bauwerkstoff">
+        <option value="">Select material</option>
+      </select>
+
+      <div class="grid2">
+        <div>
+          <label for="length">Length (m)</label>
+          <input id="length" type="number" min="0" step="0.01" placeholder="100">
+        </div>
+        <div>
+          <label for="width">Width (m)</label>
+          <input id="width" type="number" min="0" step="0.01" placeholder="12">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>3. Traffic</h2>
+      <label for="dtv">DTV — average daily traffic</label>
+      <input id="dtv" type="number" min="0" step="1" placeholder="25000">
+
+      <label for="heavy">Heavy-vehicle traffic <span class="badge">optional</span></label>
+      <input id="heavy" type="number" min="0" step="1" placeholder="optional">
+      <p>DTV is a primary user input. Heavy-vehicle traffic is optional and can be left empty.</p>
+    </div>
+
+    <div class="section">
+      <h2>4. Evaluation request</h2>
+      <p>
+        This first Plan B page collects only the compact design inputs.
+        Weather variables and internal model fields are intentionally not exposed here.
+      </p>
+      <button class="primary" id="evaluate">Prepare Design Evaluation</button>
+      <div class="actions">
+        <button class="secondary" id="reset">Reset</button>
+      </div>
+
+      <div class="result" id="result">
+        <b>Design input prepared</b>
+        <pre id="resultText"></pre>
+      </div>
+      <div class="status" id="status">Prediction engine: not connected in this first UI version.</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const CSV_FILE = "bridges_map.csv";
+const GEOJSON_URL = "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/1_sehr_hoch.geo.json";
+
+const canvas = document.getElementById("map");
+const ctx = canvas.getContext("2d");
+const tip = document.getElementById("tip");
+
+let W,H,dpr,bridges=[],points=[],quadtree,projection,germanyGeo=null;
+let zoomTransform=d3.zoomIdentity;
+
+function num(v){ return (v==null || v==="") ? null : +v; }
+
+function resize(){
+  const r=canvas.getBoundingClientRect();
+  W=r.width; H=r.height; dpr=devicePixelRatio||1;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(bridges.length) rebuildProjection();
+}
+window.addEventListener("resize",resize);
+
+function mercatorInverse(x,y){
+  const R=6378137;
+  const lon=x/R*180/Math.PI;
+  const lat=(2*Math.atan(Math.exp(y/R))-Math.PI/2)*180/Math.PI;
+  return [lon,lat];
+}
+
+function rebuildProjection(){
+  const coords=bridges.filter(d=>isFinite(d.lon)&&isFinite(d.lat)).map(d=>[d.lon,d.lat]);
+  if(!coords.length)return;
+
+  projection=d3.geoMercator();
+  if(germanyGeo){
+    projection.fitExtent([[25,25],[W-25,H-25]],germanyGeo);
+  }else{
+    projection.fitExtent([[25,25],[W-25,H-25]],{
+      type:"FeatureCollection",
+      features:coords.map(c=>({type:"Feature",geometry:{type:"Point",coordinates:c}}))
+    });
+  }
+  updateScreenPoints();
+  draw();
+}
+
+function updateScreenPoints(){
+  points=bridges
+    .filter(d=>isFinite(d.lon)&&isFinite(d.lat))
+    .map(d=>{
+      const p=projection([d.lon,d.lat]);
+      return {d,x:p[0],y:p[1]};
+    });
+  quadtree=d3.quadtree().x(d=>d.x).y(d=>d.y).addAll(points);
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(zoomTransform.x,zoomTransform.y);
+  ctx.scale(zoomTransform.k,zoomTransform.k);
+
+  if(germanyGeo){
+    const pth=d3.geoPath(projection,ctx);
+    ctx.beginPath(); pth(germanyGeo);
+    ctx.fillStyle="#e4e9ed"; ctx.fill();
+    ctx.strokeStyle="#9aa4ad"; ctx.lineWidth=1/zoomTransform.k; ctx.stroke();
+  }
+
+  for(const p of points){
+    const r=Math.max(1.2,Math.min(4.5,1.6+zoomTransform.k*.55));
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx.fillStyle="#64748b";
+    ctx.globalAlpha=.35;
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function nearest(mx,my){
+  if(!quadtree)return null;
+  const x=(mx-zoomTransform.x)/zoomTransform.k;
+  const y=(my-zoomTransform.y)/zoomTransform.k;
+  let best=null,bd=Infinity;
+
+  quadtree.visit((node,x0,y0,x1,y1)=>{
+    const dx=Math.max(0,x0-x,x-x1), dy=Math.max(0,y0-y,y-y1);
+    if(dx*dx+dy*dy>bd*bd)return true;
+    if(!node.length){
+      do{
+        const dd=Math.hypot(node.data.x-x,node.data.y-y);
+        if(dd<bd){bd=dd;best=node.data.d}
+      }while(node=node.next);
+    }
+    return false;
+  });
+  return bd<=Math.max(10,12/zoomTransform.k)?best:null;
+}
+
+function setLocation(lat,lon){
+  document.getElementById("latitude").value=Number(lat).toFixed(6);
+  document.getElementById("longitude").value=Number(lon).toFixed(6);
+}
+
+const zoom=d3.zoom().scaleExtent([1,18]).on("zoom",e=>{
+  zoomTransform=e.transform;
+  draw();
+});
+d3.select(canvas).call(zoom);
+
+d3.select(canvas).on("click",e=>{
+  const r=canvas.getBoundingClientRect();
+  const x=(e.clientX-r.left-zoomTransform.x)/zoomTransform.k;
+  const y=(e.clientY-r.top-zoomTransform.y)/zoomTransform.k;
+  if(!projection)return;
+  const ll=projection.invert([x,y]);
+  if(ll && isFinite(ll[0]) && isFinite(ll[1])) setLocation(ll[1],ll[0]);
+});
+
+d3.select(canvas).on("mousemove",e=>{
+  const r=canvas.getBoundingClientRect();
+  const d=nearest(e.clientX-r.left,e.clientY-r.top);
+  if(d){
+    tip.style.display="block";
+    tip.style.left=(e.clientX-r.left+12)+"px";
+    tip.style.top=(e.clientY-r.top+12)+"px";
+    tip.textContent=`Existing bridge: ${d.bridge_id}`;
+  }else{
+    tip.style.display="none";
+  }
+});
+
+function populateOptions(){
+  const types=[...new Set(bridges.map(d=>d.bauwerksart_text).filter(Boolean))].sort();
+  const mats=[...new Set(bridges.map(d=>d.baustoffklasse).filter(Boolean))].sort();
+
+  const t=document.getElementById("bauwerksart");
+  types.forEach(v=>{
+    const o=document.createElement("option"); o.value=v; o.textContent=v; t.appendChild(o);
+  });
+
+  const m=document.getElementById("bauwerkstoff");
+  mats.forEach(v=>{
+    const o=document.createElement("option"); o.value=v; o.textContent=v; m.appendChild(o);
+  });
+}
+
+function collectInput(){
+  return {
+    latitude:num(document.getElementById("latitude").value),
+    longitude:num(document.getElementById("longitude").value),
+    bauwerksart:document.getElementById("bauwerksart").value || null,
+    bauwerkstoff:document.getElementById("bauwerkstoff").value || null,
+    length_m:num(document.getElementById("length").value),
+    width_m:num(document.getElementById("width").value),
+    dtv:num(document.getElementById("dtv").value),
+    heavy_vehicle_traffic:num(document.getElementById("heavy").value)
+  };
+}
+
+function validate(x){
+  if(x.latitude===null || x.longitude===null) return "Latitude and longitude are required.";
+  if(x.latitude < 47 || x.latitude > 56) return "Latitude is outside the Germany-focused range.";
+  if(x.longitude < 5 || x.longitude > 16) return "Longitude is outside the Germany-focused range.";
+  if(!x.bauwerksart) return "Please select a bridge type.";
+  if(!x.bauwerkstoff) return "Please select a material.";
+  if(x.length_m===null || x.length_m<=0) return "Length must be greater than 0.";
+  if(x.width_m===null || x.width_m<=0) return "Width must be greater than 0.";
+  if(x.dtv===null || x.dtv<0) return "DTV must be provided and cannot be negative.";
+  if(x.heavy_vehicle_traffic!==null && x.heavy_vehicle_traffic<0) return "Heavy-vehicle traffic cannot be negative.";
+  return null;
+}
+
+document.getElementById("evaluate").onclick=()=>{
+  const x=collectInput();
+  const err=validate(x);
+  const status=document.getElementById("status");
+  const result=document.getElementById("result");
+  const resultText=document.getElementById("resultText");
+
+  if(err){
+    status.textContent=err;
+    status.style.color="#fca5a5";
+    result.style.display="none";
+    return;
+  }
+
+  resultText.textContent=JSON.stringify(x,null,2);
+  result.style.display="block";
+  status.textContent="Input validated. This UI is ready to connect to the frozen Plan B prediction service.";
+  status.style.color="#86efac";
+};
+
+document.getElementById("reset").onclick=()=>{
+  ["latitude","longitude","length","width","dtv","heavy"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("bauwerksart").selectedIndex=0;
+  document.getElementById("bauwerkstoff").selectedIndex=0;
+  document.getElementById("result").style.display="none";
+  document.getElementById("status").textContent="Prediction engine: not connected in this first UI version.";
+  document.getElementById("status").style.color="#9ca3af";
+};
+
+async function load(){
+  resize();
+  const data=await d3.csv(CSV_FILE);
+
+  bridges=data.map(d=>{
+    const x=+d.geom_x, y=+d.geom_y;
+    const ll=mercatorInverse(x,y);
+    return {...d,lon:ll[0],lat:ll[1]};
+  }).filter(d=>isFinite(d.lon)&&isFinite(d.lat));
+
+  populateOptions();
+
+  try{ germanyGeo=await d3.json(GEOJSON_URL); }
+  catch(e){ console.warn("Germany boundary could not be loaded:",e); }
+
+  rebuildProjection();
+}
+
+load().catch(err=>{
+  document.getElementById("status").textContent="Could not load bridges_map.csv: "+err.message;
+});
+</script>
+</body>
+</html>
