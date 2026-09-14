@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Germany Bridge Condition Dashboard</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background:#f4f6f8; color:#222; }
+  header { padding:16px 22px; background:#1f2937; color:white; }
+  header h1 { margin:0 0 5px; font-size:22px; }
+  header p { margin:0; opacity:.8; font-size:13px; }
+  .layout { display:grid; grid-template-columns: 1fr 360px; gap:12px; padding:12px; }
+  .card { background:white; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.08); overflow:hidden; }
+  #map { width:100%; height:calc(100vh - 110px); min-height:620px; }
+  .side { padding:18px; min-height:620px; }
+  .title { font-size:20px; font-weight:700; margin-bottom:12px; }
+  .muted { color:#667085; font-size:13px; }
+  .metric { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; }
+  .metric div { padding:10px; background:#f7f8fa; border-radius:7px; }
+  .metric b { display:block; font-size:16px; margin-top:3px; }
+  .condition { display:inline-block; padding:5px 9px; border-radius:15px; font-weight:bold; font-size:12px; }
+  .good { background:#d1fae5; color:#065f46; }
+  .medium { background:#fef3c7; color:#92400e; }
+  .poor { background:#fee2e2; color:#991b1b; }
+  .bridge { cursor:pointer; stroke:#111827; stroke-width:1.5; }
+  .bridge:hover { stroke-width:3; }
+  .country { fill:#eef1f4; stroke:#9aa4af; stroke-width:1; }
+  .state { fill:none; stroke:#cbd1d8; stroke-width:.7; }
+  .legend { font-size:12px; }
+  .legend circle { stroke:#333; stroke-width:.7; }
+  .chart-title { font-weight:bold; margin-top:20px; }
+  .axis text { font-size:10px; fill:#666; }
+  .axis path,.axis line { stroke:#aaa; }
+  .line { fill:none; stroke-width:3; }
+  .point { stroke:white; stroke-width:2; }
+  button { border:0; background:#2563eb; color:white; padding:9px 13px; border-radius:6px; cursor:pointer; }
+  button:hover { background:#1d4ed8; }
+  @media(max-width:900px){ .layout{grid-template-columns:1fr}.side{min-height:auto}#map{height:65vh;min-height:450px} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Germany Bridge Condition & Forecast</h1>
+  <p>Demonstration dashboard — synthetic bridge condition data</p>
+</header>
+
+<div class="layout">
+  <div class="card"><svg id="map"></svg></div>
+  <div class="card side">
+    <div class="title" id="bridgeName">Select a bridge</div>
+    <div class="muted" id="hint">Click a bridge on the map.</div>
+    <div id="details"></div>
+    <div class="chart-title">Predicted condition 2026–2040</div>
+    <svg id="chart" width="320" height="230"></svg>
+  </div>
+</div>
+
+<script>
+const width = 850, height = 680;
+const svg = d3.select("#map").attr("viewBox", `0 0 ${width} ${height}`);
+
+const bridges = [
+ {name:"Rheinbrücke Köln",city:"Köln",lat:50.950,lng:6.980,year:1980,condition:2.1,traffic:82000},
+ {name:"Theodor-Heuss-Brücke",city:"Düsseldorf",lat:51.240,lng:6.770,year:1957,condition:3.0,traffic:52000},
+ {name:"Kennedybrücke",city:"Bonn",lat:50.730,lng:7.110,year:1949,condition:2.7,traffic:45000},
+ {name:"Hafenbrücke",city:"Hamburg",lat:53.540,lng:10.020,year:1974,condition:2.4,traffic:61000},
+ {name:"Elbebrücke",city:"Magdeburg",lat:52.130,lng:11.640,year:1970,condition:2.9,traffic:39000},
+ {name:"Weserbrücke",city:"Bremen",lat:53.080,lng:8.800,year:1968,condition:2.2,traffic:47000},
+ {name:"Mainbrücke",city:"Frankfurt",lat:50.105,lng:8.690,year:1988,condition:1.8,traffic:91000},
+ {name:"Neckarbrücke",city:"Stuttgart",lat:48.790,lng:9.220,year:1978,condition:2.6,traffic:73000},
+ {name:"Isarbrücke",city:"München",lat:48.140,lng:11.570,year:1990,condition:1.6,traffic:88000},
+ {name:"Oderbrücke",city:"Frankfurt (Oder)",lat:52.340,lng:14.550,year:1965,condition:3.2,traffic:21000}
+];
+
+function conditionClass(v) {
+  if (v < 2.5) return "good";
+  if (v < 3.5) return "medium";
+  return "poor";
+}
+function conditionLabel(v) {
+  if (v < 2.5) return "Good";
+  if (v < 3.5) return "Moderate";
+  return "Poor";
+}
+function color(v) {
+  if (v < 2.5) return "#16a34a";
+  if (v < 3.5) return "#f59e0b";
+  return "#dc2626";
+}
+
+/* Simplified Germany outline for a self-contained demonstration.
+   For a real project, replace this with a GeoJSON boundary. */
+const germany = [[47.27,5.87],[47.60,7.60],[47.55,9.60],[48.10,13.80],
+ [49.00,13.90],[50.10,15.00],[51.05,14.75],[52.30,14.75],
+ [53.55,14.20],[54.80,13.00],[54.90,9.80],[54.30,8.70],
+ [53.60,8.20],[52.50,7.00],[51.50,6.00],[50.80,5.90],[49.50,6.10]];
+
+const projection = d3.geoMercator()
+  .fitExtent([[35,35],[width-35,height-35]], {type:"Feature",geometry:{type:"Polygon",coordinates:[germany.map(d=>[d[1],d[0]])]}});
+
+const path = d3.geoPath(projection);
+
+svg.append("path")
+  .datum({type:"Feature",geometry:{type:"Polygon",coordinates:[germany.map(d=>[d[1],d[0]])]}})
+  .attr("class","country").attr("d",path);
+
+/* Add subtle reference grid */
+const graticule = d3.geoGraticule().step([2,2]);
+svg.append("path").datum(graticule()).attr("d",path)
+  .attr("fill","none").attr("stroke","#ddd").attr("stroke-width",".5");
+
+const points = svg.selectAll(".bridge")
+  .data(bridges).enter().append("circle")
+  .attr("class","bridge")
+  .attr("cx",d=>projection([d.lng,d.lat])[0])
+  .attr("cy",d=>projection([d.lng,d.lat])[1])
+  .attr("r",d=>7 + Math.sqrt(d.traffic)/120)
+  .attr("fill",d=>color(d.condition))
+  .on("click",(event,d)=>showBridge(d));
+
+svg.selectAll(".label")
+  .data(bridges).enter().append("text")
+  .attr("x",d=>projection([d.lng,d.lat])[0]+9)
+  .attr("y",d=>projection([d.lng,d.lat])[1]+4)
+  .attr("font-size","10px").attr("fill","#374151")
+  .text(d=>d.city);
+
+const legend = svg.append("g").attr("transform","translate(35,590)");
+legend.append("text").attr("class","legend").attr("y",-12).text("Current condition");
+[
+ ["Good (< 2.5)","#16a34a"],["Moderate (2.5–3.5)","#f59e0b"],["Poor (≥ 3.5)","#dc2626"]
+].forEach((x,i)=>{
+  legend.append("circle").attr("cx",i*135).attr("cy",8).attr("r",6).attr("fill",x[1]);
+  legend.append("text").attr("class","legend").attr("x",i*135+10).attr("y",12).text(x[0]);
+});
+
+function forecast(d) {
+  const years = d3.range(2026,2041,2);
+  return years.map(y => ({
+    year:y,
+    condition: Math.min(5, d.condition + (y-2026) * (0.055 + d.traffic/3000000))
+  }));
+}
+
+function showBridge(d) {
+  d3.select("#bridgeName").text(d.name);
+  d3.select("#hint").text(`${d.city}, Germany`);
+  d3.select("#details").html(`
+    <div class="metric">
+      <div>Built<b>${d.year}</b></div>
+      <div>Traffic/day<b>${d3.format(",")(d.traffic)}</b></div>
+      <div>Current condition
+        <b><span class="condition ${conditionClass(d.condition)}">${d.condition.toFixed(1)} — ${conditionLabel(d.condition)}</span></b>
+      </div>
+      <div>Predicted 2040
+        <b>${forecast(d).at(-1).condition.toFixed(1)}</b>
+      </div>
+    </div>
+  `);
+  drawChart(d);
+}
+
+function drawChart(d) {
+  const data = forecast(d);
+  const chart = d3.select("#chart");
+  chart.selectAll("*").remove();
+
+  const margin={top:15,right:20,bottom:35,left:42};
+  const cw=320-margin.left-margin.right, ch=230-margin.top-margin.bottom;
+  const g=chart.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
+
+  const x=d3.scaleLinear().domain([2026,2040]).range([0,cw]);
+  const y=d3.scaleLinear().domain([1,5]).range([ch,0]);
+
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ch})`)
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format("d")));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(4));
+
+  const line=d3.line().x(p=>x(p.year)).y(p=>y(p.condition));
+  g.append("path").datum(data).attr("class","line").attr("stroke",color(data[0].condition)).attr("d",line);
+
+  g.selectAll(".point").data(data).enter().append("circle")
+    .attr("class","point").attr("cx",p=>x(p.year)).attr("cy",p=>y(p.condition))
+    .attr("r",4).attr("fill",p=>color(p.condition))
+    .append("title").text(p=>`${p.year}: condition ${p.condition.toFixed(2)}`);
+}
+
+/* Randomly select one bridge when the page opens */
+showBridge(bridges[Math.floor(Math.random()*bridges.length)]);
+</script>
+</body>
+</html>
