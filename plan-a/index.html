@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan A — Germany Bridge Condition Map</title>
+
+<link
+ rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+#panel {
+    position: absolute;
+    z-index: 1000;
+    top: 12px;
+    left: 12px;
+    width: 330px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    background: rgba(20, 24, 30, 0.96);
+    color: #f2f2f2;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 3px 18px rgba(0,0,0,0.35);
+}
+
+#panel h2 {
+    margin: 0 0 6px 0;
+    font-size: 19px;
+}
+
+#panel .subtitle {
+    font-size: 12px;
+    color: #c8c8c8;
+    margin-bottom: 14px;
+}
+
+.control {
+    margin: 9px 0;
+}
+
+.control label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: #d9d9d9;
+}
+
+select, input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px;
+    border-radius: 4px;
+    border: 1px solid #666;
+    background: #fff;
+    color: #111;
+}
+
+button {
+    width: 100%;
+    padding: 8px;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 6px;
+}
+
+#stats {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #555;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+#detail {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #555;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.warning {
+    margin-top: 7px;
+    padding: 7px;
+    border-radius: 4px;
+    background: #6b4f00;
+    color: #fff;
+}
+
+.legend {
+    margin-top: 12px;
+    font-size: 11px;
+}
+
+.legend span {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    margin-right: 3px;
+    vertical-align: middle;
+    border-radius: 50%;
+}
+
+.small {
+    font-size: 10px;
+    color: #aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div id="panel">
+    <h2>Plan A — Germany Bridge Map</h2>
+    <div class="subtitle">
+        52,214 existing bridges · current and cohort-based future scenarios
+    </div>
+
+    <div class="control">
+        <label for="view">Condition view</label>
+        <select id="view">
+            <option value="current">Current predicted</option>
+            <option value="observed">Observed</option>
+            <option value="10">+10 years</option>
+            <option value="25">+25 years</option>
+            <option value="50">+50 years</option>
+        </select>
+    </div>
+
+    <div class="control">
+        <label for="state">Bundesland</label>
+        <select id="state">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <div class="control">
+        <label for="type">Bauwerksart</label>
+        <select id="type">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <div class="control">
+        <label for="material">Baustoff</label>
+        <select id="material">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <div class="control">
+        <label for="condition">Condition range</label>
+        <select id="condition">
+            <option value="">All</option>
+            <option value="1_2">1.0–2.0</option>
+            <option value="2_3">2.0–3.0</option>
+            <option value="3_4">3.0–4.0</option>
+        </select>
+    </div>
+
+    <div class="control">
+        <label for="bridgeSearch">Bridge ID</label>
+        <input id="bridgeSearch" placeholder="Search bridge ID">
+    </div>
+
+    <button id="reset">Reset filters</button>
+
+    <div id="stats"></div>
+
+    <div class="legend">
+        <div><span style="background:#2ca25f"></span>1–2 good</div>
+        <div><span style="background:#fec44f"></span>2–3 medium</div>
+        <div><span style="background:#de2d26"></span>3–4 poor</div>
+    </div>
+
+    <div id="detail">
+        Select a bridge on the map.
+    </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let DATA = null;
+const DATA_URL = "./data/plan_a_bridge_data.json";
+
+async function loadDeploymentData() {
+    const response = await fetch(DATA_URL, { cache: "no-store" });
+    if (!response.ok) {
+        throw new Error(`Could not load data: ${response.status} ${response.statusText}`);
+    }
+    DATA = await response.json();
+}
+
+(async function() {
+    await loadDeploymentData();
+;
+
+const map = L.map('map', {
+    preferCanvas: true,
+    zoomControl: true
+}).setView([51.1657, 10.4515], 6);
+
+L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+    }
+).addTo(map);
+
+const renderer = L.canvas({ padding: 0.5 });
+let layerGroup = L.layerGroup().addTo(map);
+
+const controls = {
+    view: document.getElementById('view'),
+    state: document.getElementById('state'),
+    type: document.getElementById('type'),
+    material: document.getElementById('material'),
+    condition: document.getElementById('condition'),
+    search: document.getElementById('bridgeSearch'),
+    reset: document.getElementById('reset'),
+    stats: document.getElementById('stats'),
+    detail: document.getElementById('detail')
+};
+
+function uniqueSorted(field) {
+    return [...new Set(
+        DATA.map(x => x[field])
+            .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+            .map(v => String(v))
+    )].sort((a,b) => a.localeCompare(b, 'de'));
+}
+
+function populate(select, values) {
+    for (const value of values) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+    }
+}
+
+populate(controls.state, uniqueSorted('gis_bundesland'));
+populate(controls.type, uniqueSorted('bauwerksart_text'));
+populate(controls.material, uniqueSorted('baustoffklasse'));
+
+function conditionValue(row) {
+    const v = controls.view.value;
+
+    if (v === 'current') return row.zustandsnote_predicted;
+    if (v === 'observed') return row.zustandsnote_observed;
+    if (v === '10') return row.zustandsnote_tplus_10y;
+    if (v === '25') return row.zustandsnote_tplus_25y;
+    if (v === '50') return row.zustandsnote_tplus_50y;
+
+    return null;
+}
+
+function conditionColor(v) {
+    if (v === null || v === undefined || Number.isNaN(Number(v))) {
+        return '#777';
+    }
+
+    v = Number(v);
+
+    if (v < 2.0) return '#2ca25f';
+    if (v < 3.0) return '#fec44f';
+    return '#de2d26';
+}
+
+function inConditionRange(v) {
+    const f = controls.condition.value;
+
+    if (!f || v === null || v === undefined || Number.isNaN(Number(v))) {
+        return !f;
+    }
+
+    v = Number(v);
+
+    if (f === '1_2') return v >= 1 && v < 2;
+    if (f === '2_3') return v >= 2 && v < 3;
+    if (f === '3_4') return v >= 3 && v <= 4;
+
+    return true;
+}
+
+function filteredRows() {
+    const state = controls.state.value;
+    const type = controls.type.value;
+    const material = controls.material.value;
+    const search = controls.search.value.trim().toLowerCase();
+
+    return DATA.filter(row => {
+
+        if (state && String(row.gis_bundesland || '') !== state) {
+            return false;
+        }
+
+        if (type && String(row.bauwerksart_text || '') !== type) {
+            return false;
+        }
+
+        if (material && String(row.baustoffklasse || '') !== material) {
+            return false;
+        }
+
+        if (search &&
+            !String(row.bridge_id || '').toLowerCase().includes(search)) {
+            return false;
+        }
+
+        const v = conditionValue(row);
+
+        if (!inConditionRange(v)) {
+            return false;
+        }
+
+        return (
+            row.latitude !== null &&
+            row.longitude !== null
+        );
+    });
+}
+
+function format(v, digits=2) {
+    if (v === null || v === undefined || Number.isNaN(Number(v))) {
+        return '—';
+    }
+
+    return Number(v).toLocaleString('de-DE', {
+        maximumFractionDigits: digits
+    });
+}
+
+function detailHtml(row) {
+
+    const v = conditionValue(row);
+    const view = controls.view.value;
+
+    let uncertainty = '';
+
+    if (view === '10') {
+        uncertainty =
+            `<br><b>95% range:</b> ${format(row.zustandsnote_tplus_10y_lower)} – ${format(row.zustandsnote_tplus_10y_upper)}`;
+    }
+
+    if (view === '25') {
+        uncertainty =
+            `<br><b>95% range:</b> ${format(row.zustandsnote_tplus_25y_lower)} – ${format(row.zustandsnote_tplus_25y_upper)}`;
+    }
+
+    if (view === '50') {
+        uncertainty =
+            `<br><b>95% range:</b> ${format(row.zustandsnote_tplus_50y_lower)} – ${format(row.zustandsnote_tplus_50y_upper)}`;
+    }
+
+    let warning = '';
+
+    if (
+        (view === '10' && row.extrapolation_risk_10y) ||
+        (view === '25' && row.extrapolation_risk_25y) ||
+        (view === '50' && row.extrapolation_risk_50y)
+    ) {
+        warning =
+            `<div class="warning">Age is beyond the supported curve range for this horizon.</div>`;
+    }
+
+    return `
+        <b>Bridge ID:</b> ${row.bridge_id}<br>
+        <b>Bauwerksart:</b> ${row.bauwerksart_text || '—'}<br>
+        <b>Baustoff:</b> ${row.baustoffklasse || '—'}<br>
+        <b>Baujahr:</b> ${row.baujahr || '—'}<br>
+        <b>Alter:</b> ${format(row.age_years, 0)} Jahre<br>
+        <b>Länge:</b> ${format(row.laenge)} m<br>
+        <b>Breite:</b> ${format(row.breite)} m<br>
+        <b>Bundesland:</b> ${row.gis_bundesland || '—'}<br>
+        <b>Kreis:</b> ${row.gis_kreis || '—'}<br>
+        <b>Ort:</b> ${row.gis_ort || '—'}<br>
+        <b>DTV latest:</b> ${format(row.traffic_dtv_latest, 0)}<br>
+        <b>DTV mean:</b> ${format(row.traffic_dtv_mean, 0)}<br>
+        <hr>
+        <b>Observed Zustandsnote:</b> ${format(row.zustandsnote_observed)}<br>
+        <b>Current predicted:</b> ${format(row.zustandsnote_predicted)}<br>
+        <b>Selected view:</b> ${format(v)}
+        ${uncertainty}
+        ${warning}
+        <div class="small">
+            Future mode: ${row.forecast_mode || '—'}<br>
+            Status: ${row.forecast_status || '—'}
+        </div>
+    `;
+}
+
+function render() {
+
+    layerGroup.clearLayers();
+
+    const rows = filteredRows();
+
+    const values = rows
+        .map(conditionValue)
+        .filter(v => v !== null && v !== undefined && !Number.isNaN(Number(v)))
+        .map(Number);
+
+    for (const row of rows) {
+
+        const value = conditionValue(row);
+
+        const marker = L.circleMarker(
+            [Number(row.latitude), Number(row.longitude)],
+            {
+                renderer: renderer,
+                radius: 3,
+                weight: 0.6,
+                opacity: 0.75,
+                fillOpacity: 0.72,
+                fillColor: conditionColor(value),
+                color: '#333'
+            }
+        );
+
+        marker.on('click', () => {
+            controls.detail.innerHTML = detailHtml(row);
+        });
+
+        marker.addTo(layerGroup);
+    }
+
+    const mean = values.length
+        ? values.reduce((a,b) => a+b, 0) / values.length
+        : null;
+
+    controls.stats.innerHTML =
+        `<b>Visible bridges:</b> ${rows.length.toLocaleString('de-DE')}<br>` +
+        `<b>Condition mean:</b> ${format(mean)}<br>` +
+        `<b>View:</b> ${controls.view.options[controls.view.selectedIndex].text}`;
+
+    if (rows.length === 1) {
+        map.setView(
+            [Number(rows[0].latitude), Number(rows[0].longitude)],
+            Math.max(map.getZoom(), 12)
+        );
+    }
+}
+
+[
+    controls.view,
+    controls.state,
+    controls.type,
+    controls.material,
+    controls.condition
+].forEach(el => el.addEventListener('change', render));
+
+controls.search.addEventListener('input', render);
+
+controls.reset.addEventListener('click', () => {
+    controls.view.value = 'current';
+    controls.state.value = '';
+    controls.type.value = '';
+    controls.material.value = '';
+    controls.condition.value = '';
+    controls.search.value = '';
+    controls.detail.innerHTML = 'Select a bridge on the map.';
+    render();
+});
+
+render();
+
+})();
+</script>
+</body>
+</html>
