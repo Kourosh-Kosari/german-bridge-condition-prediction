@@ -1,0 +1,38 @@
+[
+  {
+    "path": ".nojekyll",
+    "size_bytes": 0
+  },
+  {
+    "path": "23_GitHub_Web_Deployment_Package.ipynb",
+    "size_bytes": 1462
+  },
+  {
+    "path": "README.md",
+    "size_bytes": 955
+  },
+  {
+    "path": "deployment_inventory.json",
+    "size_bytes": 568
+  },
+  {
+    "path": "index.html",
+    "size_bytes": 1103
+  },
+  {
+    "path": "plan-a/data/plan_a_bridge_data.json",
+    "size_bytes": 59188359
+  },
+  {
+    "path": "plan-a/index.html",
+    "size_bytes": 59204646
+  },
+  {
+    "path": "plan-b/data/plan_b_reference_library.json",
+    "size_bytes": 13217490
+  },
+  {
+    "path": "plan-b/index.html",
+    "size_bytes": 15586
+  }
+]
