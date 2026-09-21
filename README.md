@@ -242,57 +242,57 @@ The notebook list above describes the intended portfolio organization. The deplo
 ## Project Architecture
 
 ```text
-                         DATA SOURCES
-                              │
-                              ↓
-                    DATA ENGINEERING
-                       01 → 02 → 03
-                              │
-                              ↓
-                    04 INTEGRATED DATASET
-                              │
-                              ↓
-                    05 DATASET IMPUTATION
-                              │
-                              ↓
-                 06 FINAL BRIDGE DATASET
-                              │
-                ┌─────────────┴─────────────┐
-                │                           │
-                ↓                           ↓
-       MACHINE LEARNING              REFERENCE / DECISION
-          PIPELINE                         PIPELINE
-                │                           │
-          07 VALIDATION               18 REFERENCE LIBRARY
-                ↓                           ↓
-          11 PIPELINE AUDIT            19 VALIDATION
-                ↓                           ↓
-          12 MODEL FREEZE              20 USER SCENARIO
-                ↓                           ↓
-       13 PRODUCTION INFERENCE         21 INTERFACE
-                │                           │
-                ↓                           ↓
-       FROZEN CONDITION MODEL        DECISION ENGINE
-                │                           ↑
-                │                           │
-                ├──────────→ CONDITION ─────┘
-                │             EVIDENCE
-                ↓
-             PLAN A
-          15 → 16 → 17
-                │
-                ↓
-      Current / Future Condition
-
-
-                       PLAN B
-                         ↑
-             Reference + Similarity
-             + Condition Evidence
+                    DATA SOURCES
                          │
-                         ↓
-                 Bridge-Type Selection
-```
+                         ▼
+              DATA ENGINEERING PIPELINE
+                  01 → 02 → 03
+                         │
+                         ▼
+                04 INTEGRATED DATASET
+                         │
+                         ▼
+                 05 DATA IMPUTATION
+                         │
+                         ▼
+              06 FINAL BRIDGE DATASET
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+     MACHINE LEARNING         DECISION SUPPORT
+        PIPELINE                   PIPELINE
+              │                     │
+      07 Model Validation     18 Reference Library
+              │                     │
+      11 Pipeline Audit       19 Independent Validation
+              │                     │
+      12 Model Freeze         20 User Scenario
+              │                     │
+      13 Production           21 Interactive UI
+         Inference                   │
+              │                      │
+              ▼                      ▼
+       FROZEN CONDITION        DECISION ENGINE
+            MODEL                    ▲
+              │                      │
+              ├───────┐              │
+              ▼       ▼              │
+           PLAN A   CONDITION ───────┘
+              │      EVIDENCE
+        ┌─────┴─────┐
+        ▼           ▼
+     Current      Future
+    Condition    Scenarios
+        │
+        ▼
+   17 Germany Web Map
+
+                 PLAN B
+        Reference + Similarity
+        + Condition Evidence
+                 │
+                 ▼
+        Bridge-Type Selection
 
 The ML condition model and the Plan B reference-based decision layer are intentionally separated. Length and width can be used in the Plan B similarity/reference engine without being inserted into the frozen 86-predictor condition model.
 
