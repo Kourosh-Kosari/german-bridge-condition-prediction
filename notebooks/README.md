@@ -1,8 +1,8 @@
 # Bridge ML Portfolio — Notebooks
 
-This folder contains the 22 project notebooks supplied in the project archive.
+This folder contains the 22 notebooks that document the complete development workflow of the German Bridge Condition Prediction project.
 
-The notebooks are preserved as provided; this portfolio layer only organizes them for review.
+The notebooks cover data engineering, machine learning, validation, engineering decision support, Plan A, Plan B, final integration, and deployment preparation.
 
 ## Project workflow
 
