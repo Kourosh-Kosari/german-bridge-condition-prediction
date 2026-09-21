@@ -195,7 +195,6 @@ The final integration checks confirm consistent bridge populations across the ma
 ```text
 german-bridge-condition-prediction/
 │
-├── index.html
 ├── README.md
 ├── .nojekyll
 ├── 23_GitHub_Web_Deployment_Package.ipynb
