@@ -294,7 +294,7 @@ The notebook list above describes the intended portfolio organization. The deplo
                  ▼
         Bridge-Type Selection
 
-The ML condition model and the Plan B reference-based decision layer are intentionally separated. Length and width can be used in the Plan B similarity/reference engine without being inserted into the frozen 86-predictor condition model.
+The ML condition model and the Plan B reference-based decision layer are separate components, while condition predictions may be used as evidence within the Plan B decision process.
 
 ---
 
