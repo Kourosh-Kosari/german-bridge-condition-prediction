@@ -312,7 +312,7 @@ It does not replace:
 - formal approval
 - expert engineering judgement
 
-The outputs should therefore be interpreted as analytical evidence and decision support rather than as a construction-ready structural design.
+The outputs should therefore be interpreted as analytical evidence and decision support rather than as construction-ready structural design or formal engineering approval.
 
 ---
 
@@ -330,4 +330,4 @@ The frozen model is treated as an immutable artifact during Plan A and Plan B de
 
 Civil / Structural Engineering · Data Analysis · Machine Learning · Infrastructure Digitalization
 
-This project demonstrates the combination of structural engineering domain knowledge with data engineering, machine learning and interactive web deployment.
+This project demonstrates the combination of structural engineering domain knowledge with data engineering, machine learning and infrastructure decision support.
