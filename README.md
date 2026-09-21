@@ -198,6 +198,8 @@ german-bridge-condition-prediction/
 ├── index.html
 ├── README.md
 ├── .nojekyll
+├── 23_GitHub_Web_Deployment_Package.ipynb
+├── deployment_inventory.json
 │
 ├── plan-a/
 │   ├── index.html
@@ -209,18 +211,29 @@ german-bridge-condition-prediction/
 │   └── data/
 │       └── plan_b_reference_library.json
 │
-├── notebooks/
-│   ├── 15_Plan_A_Current_Bridge_Condition.ipynb
-│   ├── 16_Plan_A_Future_Condition.ipynb
-│   ├── 17_Plan_A_Germany_Web_Map.ipynb
-│   ├── 18_Plan_B_Reference_Library.ipynb
-│   ├── 19_Plan_B_Independent_Validation.ipynb
-│   ├── 20_Plan_B_User_Scenario.ipynb
-│   ├── 21_Plan_B_Final_Interactive_Interface.ipynb
-│   ├── 22_Final_Project_Integration.ipynb
-│   └── 23_GitHub_Web_Deployment_Package.ipynb
-│
-└── deployment_inventory.json
+└── notebooks/
+    ├── 01_BAST_GIS.ipynb
+    ├── 02_Traffic_Features.ipynb
+    ├── 03_Weather_Features.ipynb
+    ├── 04_Integrated_Dataset.ipynb
+    ├── 05_Dataset_Imputation.ipynb
+    ├── 06_Load_Final_Bridge_Dataset_to_PostgreSQL.ipynb
+    ├── 07_ML_Condition_Model_Validation.ipynb
+    ├── 08_Bridge_Type_Decision_Engine_Independent_Validation.ipynb
+    ├── 09_ML_Bridge_Type_Selection_Explainability_Robustness.ipynb
+    ├── 10_Bridge_Type_Engineering_Decision_Report.ipynb
+    ├── 11_Pipeline_Audit_and_Reproducibility.ipynb
+    ├── 12_ML_Model_Freeze_and_Packaging.ipynb
+    ├── 13_End_to_End_Inference_and_Production.ipynb
+    ├── 14_Bridge_Map_Builder.ipynb
+    ├── 15_Plan_A_Current_Bridge_Condition.ipynb
+    ├── 16_Plan_A_Future_Condition.ipynb
+    ├── 17_Plan_A_Germany_Web_Map.ipynb
+    ├── 18_Plan_B_Reference_Library_and_Decision_Engine.ipynb
+    ├── 19_Plan_B_Independent_Validation_and_Decision_Engine.ipynb
+    ├── 20_Plan_B_User_Scenario_Recommendation_Engine.ipynb
+    ├── 21_Plan_B_Final_Interactive_Interface.ipynb
+    └── 22_Final_Project_Integration_and_PreDeployment_Gate.ipynb
 ```
 
 The notebook list above describes the intended portfolio organization. The deployed web application is separated from the analysis notebooks so that GitHub Pages can serve the application as a static site.
