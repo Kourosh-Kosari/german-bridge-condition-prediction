@@ -1,0 +1,293 @@
+# German Bridge ML Project
+
+![German Bridge ML Project — Project Overview](project_hero.png)
+
+## Data-driven bridge condition prediction and decision support for Germany
+
+An end-to-end machine learning and web deployment project for analysing the condition of German bridges and supporting bridge-type decisions from comparable existing structures.
+
+**52,214 bridges · 86 ML predictors · ExtraTrees regression · Interactive Plan A & Plan B**
+
+---
+
+## Live Demo
+
+### Plan A — Germany Bridge Condition Map
+
+**[Open Plan A](https://kourosh-kosari.github.io/german-bridge-condition-prediction/plan-a/)**
+
+Interactive Germany-wide bridge map with current predicted condition and cohort-based future scenarios.
+
+### Plan B — Bridge-Type Decision Support
+
+**[Open Plan B](https://kourosh-kosari.github.io/german-bridge-condition-prediction/plan-b/)**
+
+Interactive scenario interface that compares a proposed bridge with geographically and technically comparable existing bridges and produces bridge-type decision support.
+
+---
+
+## Project Story
+
+The project combines civil/structural engineering knowledge with data engineering, machine learning and web-based decision support.
+
+The workflow is:
+
+```text
+Bridge Data
+    ↓
+Data Engineering & Feature Construction
+    ↓
+Final Bridge-Level Dataset
+    ↓
+86-Predictor ML Contract
+    ↓
+Frozen ExtraTrees Model
+    ↓
+┌───────────────────────────────┐
+│                               │
+▼                               ▼
+Plan A                          Plan B
+Current / future                Reference-based
+bridge condition                bridge-type
+analysis                         decision support
+│                               │
+└───────────────┬───────────────┘
+                ↓
+        Interactive Web Apps
+                ↓
+          GitHub Pages
+```
+
+---
+
+## Plan A — Germany Bridge Condition
+
+Plan A provides an interactive map of the German bridge population.
+
+It supports:
+
+- current predicted bridge condition
+- observed condition as reference information
+- cohort-based future condition scenarios
+- +10, +25 and +50 year horizons
+- filtering by Bundesland
+- filtering by Bauwerksart
+- filtering by Baustoff
+- condition-range filtering
+- bridge-ID search
+- bridge-level information on map selection
+
+The future layer is a **cohort age-conditioned scenario layer**. It is not presented as a validated individual longitudinal deterioration forecast. Uncertainty and extrapolation status are retained in the outputs.
+
+---
+
+## Plan B — Bridge-Type Decision Support
+
+Plan B is designed for a proposed/new bridge scenario.
+
+The user can enter parameters such as:
+
+- latitude
+- longitude
+- bridge length
+- bridge width
+- optional DTV
+- optional Baustoff
+
+The system then:
+
+1. identifies comparable existing bridges
+2. calculates parameter/geographic similarity
+3. forms an evidence cohort
+4. evaluates bridge-type performance evidence
+5. combines similarity and performance into a transparent decision score
+6. presents ranked Bauwerksarten
+7. shows supporting reference bridges
+
+The decision-support layer is reference-based. The **Bauwerksart is the target, not an input**.
+
+Plan B is not structural design, FEM analysis, dimensioning, code checking or formal engineering approval.
+
+---
+
+## Machine Learning
+
+The condition model is an **ExtraTreesRegressor** using a frozen 86-predictor feature contract.
+
+### Independent test performance
+
+| Metric | Result |
+|---|---:|
+| MAE | 0.248871 |
+| RMSE | 0.332170 |
+| R² | 0.452683 |
+
+These are the frozen independent-test results and are distinct from retrospective full-population scoring.
+
+### Dataset
+
+- Bridge population: **52,214**
+- Final predictor count: **86**
+- Target: `zustandsnote`
+- Bridge-level grain: one row per `bridge_id`
+- Frozen model: ExtraTrees regression
+
+The frozen model is not retrained or changed by the Plan A / Plan B deployment layer.
+
+---
+
+## Validation & Quality Gates
+
+The project includes dedicated validation and integration stages:
+
+- Plan A current-condition validation
+- future-condition output checks
+- Germany map validation
+- Plan B reference-library validation
+- independent Plan B validation
+- user-scenario validation
+- final project integration audit
+- frozen-model integrity check
+- output inventory
+
+The final integration checks confirm consistent bridge populations across the main Plan A / Plan B outputs and preserve the documented architecture boundaries.
+
+---
+
+## Technology Stack
+
+**Engineering / Data**
+
+- Python
+- Pandas
+- NumPy
+- PostgreSQL
+- SQL
+- Parquet / CSV
+
+**Machine Learning**
+
+- scikit-learn
+- ExtraTreesRegressor
+- feature engineering
+- validation and reproducibility controls
+
+**Infrastructure Data**
+
+- bridge inspection / structural attributes
+- traffic data
+- weather data
+- geographic matching
+
+**Web**
+
+- HTML
+- CSS
+- JavaScript
+- Leaflet
+- OpenStreetMap
+- GitHub Pages
+
+---
+
+## Repository Structure
+
+```text
+german-bridge-condition-prediction/
+│
+├── index.html
+├── README.md
+├── .nojekyll
+│
+├── plan-a/
+│   ├── index.html
+│   └── data/
+│       └── plan_a_bridge_data.json
+│
+├── plan-b/
+│   ├── index.html
+│   └── data/
+│       └── plan_b_reference_library.json
+│
+├── notebooks/
+│   ├── 15_Plan_A_Current_Bridge_Condition.ipynb
+│   ├── 16_Plan_A_Future_Condition.ipynb
+│   ├── 17_Plan_A_Germany_Web_Map.ipynb
+│   ├── 18_Plan_B_Reference_Library.ipynb
+│   ├── 19_Plan_B_Independent_Validation.ipynb
+│   ├── 20_Plan_B_User_Scenario.ipynb
+│   ├── 21_Plan_B_Final_Interactive_Interface.ipynb
+│   ├── 22_Final_Project_Integration.ipynb
+│   └── 23_GitHub_Web_Deployment_Package.ipynb
+│
+└── deployment_inventory.json
+```
+
+The notebook list above describes the intended portfolio organization. The deployed web application is separated from the analysis notebooks so that GitHub Pages can serve the application as a static site.
+
+---
+
+## Project Architecture
+
+```text
+RAW / SOURCE DATA
+       │
+       ▼
+CLEANED DATA
+       │
+       ▼
+TRANSFORMED FEATURES
+       │
+       ▼
+FINAL BRIDGE-LEVEL DATASET
+       │
+       ├──────────────► Plan A
+       │                 │
+       │                 ├─ Current condition
+       │                 └─ Future scenario layer
+       │
+       └──────────────► Plan B
+                         │
+                         ├─ Reference library
+                         ├─ Similarity
+                         ├─ Performance evidence
+                         └─ Decision support
+```
+
+The ML condition model and the Plan B reference-based decision layer are intentionally separated. Length and width can be used in the Plan B similarity/reference engine without being inserted into the frozen 86-predictor condition model.
+
+---
+
+## Engineering Boundary
+
+This project is a **data-driven decision-support system**.
+
+It does not replace:
+
+- structural design
+- FEM modelling
+- structural dimensioning
+- code checking
+- engineering calculations
+- formal approval
+- expert engineering judgement
+
+The outputs should therefore be interpreted as analytical evidence and decision support rather than as a construction-ready structural design.
+
+---
+
+## Reproducibility
+
+The project maintains explicit feature contracts, model integrity checks, validation gates and deployment inventories.
+
+The frozen model is treated as an immutable artifact during Plan A and Plan B development.
+
+---
+
+## Author / Portfolio Focus
+
+**Kourosh Kosari**
+
+Civil / Structural Engineering · Data Analysis · Machine Learning · Infrastructure Digitalization
+
+This project demonstrates the combination of structural engineering domain knowledge with data engineering, machine learning and interactive web deployment.
