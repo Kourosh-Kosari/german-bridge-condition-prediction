@@ -9,7 +9,28 @@ An end-to-end machine learning and web deployment project for analysing the cond
 **52,214 bridges · 86 ML predictors · ExtraTrees regression · Interactive Plan A & Plan B**
 
 ---
+# German Bridge ML Project
 
+[großes Projektbild]
+
+## Data-driven bridge condition prediction and decision support for Germany
+
+An end-to-end machine learning and web deployment project ...
+
+52,214 bridges · 86 ML predictors · ExtraTrees regression · Interactive Plan A & Plan B
+
+
+## Engineering Context
+
+This project combines civil and bridge engineering with data analytics. It integrates bridge inspection, structural, traffic and environmental data to analyse the condition of German bridges and explore data-driven decision support.
+
+The project demonstrates how Python, SQL and machine learning can complement engineering workflows. It is intended as an analytical and decision-support tool and does not replace structural calculations, design, code verification or professional engineering judgement.
+
+---
+## Live Demo
+
+### Plan A — Germany Bridge Condition Map
+...
 ## Live Demo
 
 ### Plan A — Germany Bridge Condition Map
