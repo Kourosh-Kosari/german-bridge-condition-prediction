@@ -11,8 +11,6 @@ An end-to-end machine learning and web deployment project for analysing the cond
 ---
 # German Bridge ML Project
 
-[großes Projektbild]
-
 ## Data-driven bridge condition prediction and decision support for Germany
 
 An end-to-end machine learning and web deployment project ...
