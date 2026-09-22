@@ -317,7 +317,9 @@ The ML condition model and the Plan B reference-based decision layer are separat
 
 ---
 
-## Engineering Boundary
+---
+
+# Engineering Boundary
 
 This project is a **data-driven decision-support system**.
 
@@ -331,7 +333,7 @@ It does not replace:
 - formal approval
 - expert engineering judgement
 
-The outputs should therefore be interpreted as analytical evidence and decision support rather than as construction-ready structural design or formal engineering approval.
+The outputs should therefore be interpreted as analytical evidence and decision support rather than as construction-ready structural design.
 
 ---
 
@@ -343,10 +345,10 @@ The frozen model is treated as an immutable artifact during Plan A and Plan B de
 
 ---
 
-## Author / Portfolio Focus
+# Author / Portfolio Focus
 
 **Kourosh Kosari**
 
-Civil / Structural Engineering · Data Analysis · Machine Learning · Infrastructure Digitalization
+Civil / Structural Engineering · Bridge Engineering · Data Analysis · Machine Learning
 
-This project demonstrates the combination of structural engineering domain knowledge with data engineering, machine learning and infrastructure decision support.
+This project demonstrates the combination of structural engineering knowledge with data engineering, machine learning and infrastructure data analysis.
