@@ -335,7 +335,7 @@ The outputs should therefore be interpreted as analytical evidence and decision 
 
 ---
 
-## Reproducibility
+# Reproducibility
 
 The project maintains explicit feature contracts, model integrity checks, validation gates and deployment inventories.
 
