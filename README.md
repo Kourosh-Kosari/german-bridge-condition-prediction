@@ -315,8 +315,7 @@ The notebook list above describes the intended portfolio organization. The deplo
 
 The ML condition model and the Plan B reference-based decision layer are separate components, while condition predictions may be used as evidence within the Plan B decision process.
 
----
-
+```
 ### Engineering Boundary
 
 This project is a **data-driven decision-support system**.
@@ -350,3 +349,5 @@ The frozen model is treated as an immutable artifact during Plan A and Plan B de
 Civil / Structural Engineering · Bridge Engineering · Data Analysis · Machine Learning
 
 This project demonstrates the combination of structural engineering knowledge with data engineering, machine learning and infrastructure data analysis.
+
+```text
